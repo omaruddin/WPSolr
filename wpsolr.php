@@ -8,3 +8,25 @@ Author: Morgan Benton and Rachel Jacobson
 Author URI: http://www.wpsolr.net/
 License: GPLv3
 */
+
+// check to see that the WPSolr class does not already exist
+if ( ! class_exists( 'WPSolr' ) ) :
+
+// if not, then create it
+class WPSolr {
+	
+	/**
+	 * Constructor
+	 */
+	function WPSolr() {
+	}
+	// old-style constructor for backward PHP compatibility
+	function __construct() { $this->WPSolr(); }
+}
+// then create an instance of the class
+if ( ! isset( $wpsolr ) ) $wpsolr = new WPSolr;
+
+else:
+	// WPSolr class already existed
+	die( 'WPSolr class already exists!' );
+endif;
