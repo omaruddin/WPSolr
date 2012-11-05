@@ -35,17 +35,33 @@ class WPSolr {
 	 * Modifies the list of fields available when editing uploaded media files
 	 */
 	function attachment_fields_to_edit( $fields, $post ) {
+		//echo '<pre>' . print_r( $fields, true ) . '</pre>'; exit;
 		$fields[ 'wpsolr' ][ 'label' ] = __( 'WPSolr Field' );
-		$fields[ 'wpsolr' ][ 'value' ] = get_post_meta( $post->ID, "wpsolr", true );
 		$fields[ 'wpsolr' ][ 'helps' ] = __( 'Here is some helpful text.' );
+		$fields[ 'wpsolr' ][ 'input' ] = 'html';
+		$wpsolr_values = array( 'Red', 'White', 'Blue' );
+		$wpsolr_options = '<option value="">Choose one...</option>';
+		$wpsolr_value = get_post_meta( $post->ID, "wpsolr", true );
+		foreach ( $wpsolr_values as $val ) {
+			$selected = $val == $wpsolr_value ? ' selected' : '';
+			$wpsolr_options .= '<option value="' . $val . '"' . $selected . '>' . $val . '</option>';
+		}
+		$fields[ 'wpsolr' ][ 'html'  ] = '<select name="attachments[' . $post->ID . '][wpsolr]">' .
+											$wpsolr_options .
+										 '</select>';
+		/**/
 		return $fields;
 	}
 	
 	/**
 	 * Saves the data from the fields added by attachment_fields_to_edit
 	 */
-	function attachment_fields_to_save() {
-	
+	function attachment_fields_to_save( $post, $fields ) {
+		// check to see that wpsolr data has been added
+		if ( isset( $fields[ 'wpsolr' ] ) ) {
+			update_post_meta( $post[ 'ID' ], 'wpsolr', $fields[ 'wpsolr' ] );
+		}
+		return $post;
 	}
 	
 }
