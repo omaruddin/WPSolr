@@ -49,8 +49,18 @@ class WPSolr {
 	 */
     function admin_menu() {
         // WP Solr Settings Page
-        add_options_page( 'WP Solr Settings', 'WP Solr Settings', 'manage_options', 'wpsolr-settings', array( &$this, 'wpsolr_settings_menu' ) );
-    }
+        $wpsolr_options_page = add_options_page( 'WP Solr Settings', 'WP Solr Settings', 'manage_options', 'wpsolr-settings', array( &$this, 'wpsolr_settings_menu' ) );
+    
+		// enqueue scripts for this page
+		add_action( 'admin_print_scripts-' . $wpsolr_options_page, array( &$this, 'admin_print_scripts' ) );
+	}
+	
+	/**
+	 * Output necessary javascripts
+	 */
+	function admin_print_scripts() {
+		wp_enqueue_script( 'wpsolr-js' );
+	}
 
 	/**
 	 * Output the content for the WPSolr Settings Menu page
@@ -98,8 +108,10 @@ class WPSolr {
 		add_settings_field( 'field_name',  __( 'Field Name'  ), array( &$this, 'field_name_field'  ), 'wpsolr-settings', 'wpsolr_settings_section' );
 		add_settings_field( 'field_label', __( 'Field Label' ), array( &$this, 'field_label_field' ), 'wpsolr-settings', 'wpsolr_settings_section' );
 		add_settings_field( 'field_helps', __( 'Field Help'  ), array( &$this, 'field_helps_field' ), 'wpsolr-settings', 'wpsolr_settings_section' );
+		add_settings_field( 'field_type',  __( 'Field Type'  ), array( &$this, 'field_type_field'  ), 'wpsolr-settings', 'wpsolr_settings_section' );
 
-
+		// register styles and scripts
+		wp_register_script( 'wpsolr-js', plugins_url( 'js/wpsolr.js', __FILE__ ), 'jquery' );
 	}
 	
 	/**
@@ -109,34 +121,55 @@ class WPSolr {
 		echo '<p>Configure the settings for the added metadata field.</p>';
 	}
 	function field_name_field() {
-		echo '<input type="text" id="wpsolr_results_per_page" name="wpsolr_settings[field_name]" value="' . $this->settings[ 'field_name' ] . '" /> (must have no spaces or non-word characters)';
+		echo '<input type="text" id="wpsolr_settings_field_name" name="wpsolr_settings[field_name]" value="' . $this->settings[ 'field_name' ] . '" /> (must have no spaces or non-word characters)';
 	}
 	function field_label_field() {
-	
+		echo '<input type="text" id="wpsolr_settings_field_label" name="wpsolr_settings[field_label]" value="' . $this->settings[ 'field_label' ] . '" /> ';
 	}
 	function field_helps_field() {
-	
+		echo '<input type="text" id="wpsolr_settings_field_helps" name="wpsolr_settings[field_helps]" value="' . $this->settings[ 'field_helps' ] . '" /> ';
+	}
+	function field_type_field() {
+		$ft = $this->settings[ 'field_type' ];
+		//echo $ft; exit;
+		?>
+		<select name="wpsolr_settings[field_type]" id="wpsolr_settings_field_type">
+			<optgroup class="text_types" label="Text Types">
+				<option value="text"<?php echo 'text' == $ft ? ' selected' : ''; ?>>Text (single line)</option>
+				<option value="textarea"<?php echo 'textarea' == $ft ? ' selected' : ''; ?>>Text Area</option>
+				<option value="email"<?php echo 'email' == $ft ? ' selected' : ''; ?>>Email</option>
+				<option value="tel"<?php echo 'tel' == $ft ? ' selected' : ''; ?>>Telephone Number</option>
+				<option value="url"<?php echo 'url' == $ft ? ' selected' : ''; ?>>URL</option>
+			</optgroup>
+			<optgroup class="choice_types" label="Choice Types">
+				<option value="checkbox"<?php echo 'checkbox' == $ft ? ' selected' : ''; ?>>Check Boxes</option>
+				<option value="radio"<?php echo 'radio' == $ft ? ' selected' : ''; ?>>Radio Buttons</option>
+				<option value="select"<?php echo 'select' == $ft ? ' selected' : ''; ?>>Dropdown Menu</option>
+			</optgroup>
+			<optgroup class="range_types" label="Range Types">
+				<option value="number"<?php echo 'number' == $ft ? ' selected' : ''; ?>>Numeric</option>
+				<option value="range"<?php echo 'range' == $ft ? ' selected' : ''; ?>>Numeric Range</option>
+				<option value="date"<?php echo 'date' == $ft ? ' selected' : ''; ?>>Date</option>
+				<option value="time"<?php echo 'time' == $ft ? ' selected' : ''; ?>>Time</option>
+				<option value="datetime"<?php echo 'datetime' == $ft ? ' selected' : ''; ?>>Date and Time</option>
+			</optgroup>
+		</select>
+		<div class="choice_type_options type_options" style="display:none;">
+			<p>Choice type options go here.</p>
+		</div>
+		<div class="range_type_options type_options" style="display:none;">
+			<p>Range type options go here.</p>
+		</div>
+		<?php
 	}
 	
 	/**
 	 * Modifies the list of fields available when editing uploaded media files
 	 */
 	function attachment_fields_to_edit( $fields, $post ) {
-		//echo '<pre>' . print_r( $fields, true ) . '</pre>'; exit;
-		$fields[ 'wpsolr' ][ 'label' ] = __( 'WPSolr Field' );
-		$fields[ 'wpsolr' ][ 'helps' ] = __( 'Here is some helpful text.' );
-		$fields[ 'wpsolr' ][ 'input' ] = 'html';
-		$wpsolr_values = array( 'Red', 'White', 'Blue' );
-		$wpsolr_options = '<option value="">Choose one...</option>';
-		$wpsolr_value = get_post_meta( $post->ID, "wpsolr", true );
-		foreach ( $wpsolr_values as $val ) {
-			$selected = $val == $wpsolr_value ? ' selected' : '';
-			$wpsolr_options .= '<option value="' . $val . '"' . $selected . '>' . $val . '</option>';
-		}
-		$fields[ 'wpsolr' ][ 'html'  ] = '<select name="attachments[' . $post->ID . '][wpsolr]">' .
-											$wpsolr_options .
-										 '</select>';
-		/**/
+		$fields[ $this->settings[ 'field_name' ] ][ 'label' ] = $this->settings[ 'field_label' ];
+		$fields[ $this->settings[ 'field_name' ] ][ 'helps' ] = $this->settings[ 'field_helps' ];
+		$fields[ $this->settings[ 'field_name' ] ][ 'value' ] = get_post_meta( $post->ID, $this->settings[ 'field_name' ], true );
 		return $fields;
 	}
 	
@@ -145,8 +178,8 @@ class WPSolr {
 	 */
 	function attachment_fields_to_save( $post, $fields ) {
 		// check to see that wpsolr data has been added
-		if ( isset( $fields[ 'wpsolr' ] ) ) {
-			update_post_meta( $post[ 'ID' ], 'wpsolr', $fields[ 'wpsolr' ] );
+		if ( isset( $fields[ $this->settings[ 'field_name' ] ] ) ) {
+			update_post_meta( $post[ 'ID' ], $this->settings[ 'field_name' ], $fields[ $this->settings[ 'field_name' ] ] );
 		}
 		return $post;
 	}
@@ -156,6 +189,9 @@ class WPSolr {
 	 */
 	function validate_wpsolr_settings( $input ) {
 		// TO DO: sanitize user input here
+		if ( isset( $input[ 'field_name' ] ) && $input[ 'field_name' ] != $this->settings[ 'field_name' ] ) {
+			echo '<pre>' . print_r( $input, true ) . '</pre>'; exit;
+		}
 		return $input;
 	}
 	
