@@ -131,7 +131,9 @@ class WPSolr {
 	}
 	function field_type_field() {
 		$ft = $this->settings[ 'field_type' ];
-		//echo $ft; exit;
+		$display = 'text';
+		if ( in_array( $ft, array( 'checkbox', 'radio', 'select' ) ) ) $display = 'choice';
+		if ( in_array( $ft, array( 'number', 'range', 'date', 'time', 'datetime' ) ) ) $display = 'range';
 		?>
 		<select name="wpsolr_settings[field_type]" id="wpsolr_settings_field_type">
 			<optgroup class="text_types" label="Text Types">
@@ -154,10 +156,14 @@ class WPSolr {
 				<option value="datetime"<?php echo 'datetime' == $ft ? ' selected' : ''; ?>>Date and Time</option>
 			</optgroup>
 		</select>
-		<div class="choice_type_options type_options" style="display:none;">
-			<p>Choice type options go here.</p>
+		<div class="choice_type_options type_options" style="display:<?php echo 'choice' == $display ? 'block' : 'none'; ?>;">
+			<textarea name="wpsolr_settings[choice_type_options]" style="float:left;"><?php 
+				echo $this->settings[ 'choice_type_options' ]; 
+			?></textarea>
+			enter choices, one per line, or<br>
+			enter key/value pairs, one per line
 		</div>
-		<div class="range_type_options type_options" style="display:none;">
+		<div class="range_type_options type_options" style="display:<?php echo 'range' == $display ? 'block' : 'none'; ?>;">
 			<p>Range type options go here.</p>
 		</div>
 		<?php
@@ -167,9 +173,56 @@ class WPSolr {
 	 * Modifies the list of fields available when editing uploaded media files
 	 */
 	function attachment_fields_to_edit( $fields, $post ) {
-		$fields[ $this->settings[ 'field_name' ] ][ 'label' ] = $this->settings[ 'field_label' ];
-		$fields[ $this->settings[ 'field_name' ] ][ 'helps' ] = $this->settings[ 'field_helps' ];
-		$fields[ $this->settings[ 'field_name' ] ][ 'value' ] = get_post_meta( $post->ID, $this->settings[ 'field_name' ], true );
+		echo '<pre>' . print_r( $this->settings, true ) . '</pre>';
+		$ft   = $this->settings[ 'field_type' ];
+		$fn   = $this->settings[ 'field_name' ];
+		$val  = get_post_meta( $post->ID, $fn, true );
+		$name = 'attachments[' . $post->ID . '][' . $fn . ']';
+		$fields[ $fn ][ 'label' ] = $this->settings[ 'field_label' ];
+		$fields[ $fn ][ 'helps' ] = $this->settings[ 'field_helps' ];
+		switch ( $ft ) {
+			case 'text':
+				$fields[ $fn ][ 'value' ] = $val;
+				break;
+			case 'email':
+			case 'tel':
+			case 'url':
+				// output a text box of the appropriate type
+				$fields[ $fn ][ 'input' ] = 'html';
+				$fields[ $fn ][ 'html'  ] = '<input type="' . $ft . '" name="'. $name . '" value="' . $val . '">';
+				break;
+			case 'textarea':
+				$fields[ $fn ][ 'input' ] = 'html';
+				$fields[ $fn ][ 'html'  ] = '<textarea name="' . $name . '">' . $val . '</textarea>';
+				break;
+			case 'radio':
+				$fields[ $fn ][ 'input' ] = 'html';
+				$opts = $this->settings[ 'choice_type_options' ];
+				$opts = explode( "\n", $opts );
+				$radios = '';
+				foreach ( $opts as $opt ) {
+					$v = strtok( trim( $opt ), '/' );
+					$n = strtok( '/' );
+					$checked = $v == $val ? ' checked' : '';
+					$radios .= '<label><input type="radio" name="' . $name . '" value="' . $v . '"' . $checked . '> ' . $n . '</label><br>';
+				}
+				$fields[ $fn ][ 'html'  ] = $radios;
+				break;
+			case 'checkbox':
+				$fields[ $fn ][ 'input' ] = 'html';
+				$opts = $this->settings[ 'choice_type_options' ];
+				$opts = explode( "\n", $opts );
+				$boxes = '';
+				foreach ( $opts as $opt ) {
+					$v = strtok( trim( $opt ), '/' );
+					$n = strtok( '/' );
+					$checked = in_array( $v, $val ) ? ' checked' : '';
+					$boxes .= '<label><input type="checkbox" name="' . $name . '[]" value="' . $v . '"' . $checked . '> ' . $n . '</label><br>';
+				}
+				$fields[ $fn ][ 'html'  ] = $boxes;
+				break;
+			
+		}
 		return $fields;
 	}
 	
