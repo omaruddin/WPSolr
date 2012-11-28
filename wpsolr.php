@@ -105,11 +105,12 @@ class WPSolr {
         add_settings_section( 'wpsolr_settings_section', 'Extra Metadata Fields', array( &$this, 'wpsolr_settings_section' ), 'wpsolr-settings' );
 		
 		// add settings fields
+		/*
 		add_settings_field( 'field_name',  __( 'Field Name'  ), array( &$this, 'field_name_field'  ), 'wpsolr-settings', 'wpsolr_settings_section' );
 		add_settings_field( 'field_label', __( 'Field Label' ), array( &$this, 'field_label_field' ), 'wpsolr-settings', 'wpsolr_settings_section' );
 		add_settings_field( 'field_helps', __( 'Field Help'  ), array( &$this, 'field_helps_field' ), 'wpsolr-settings', 'wpsolr_settings_section' );
 		add_settings_field( 'field_type',  __( 'Field Type'  ), array( &$this, 'field_type_field'  ), 'wpsolr-settings', 'wpsolr_settings_section' );
-
+		*/
 		// register styles and scripts
 		wp_register_script( 'wpsolr-js', plugins_url( 'js/wpsolr.js', __FILE__ ), 'jquery' );
 	}
@@ -119,6 +120,30 @@ class WPSolr {
 	 */
 	function wpsolr_settings_section() {
 		echo '<p>Configure the settings for the added metadata field.</p>';
+		?>
+		<table class="form-table">
+			<thead>
+				<tr>
+					<th scope="col">Name</th>
+					<th scope="col">Label</th>
+					<th scope="col">Help</th>
+					<th scope="col">Type</th>
+					<th scope="col">Extra</th>
+					<th scope="col">Remove</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr>
+					<th scope="row"><input type="text" id="wpsolr_settings_field_name" name="wpsolr_settings[field_name]" value="<?php echo $this->settings[ 'field_name' ]; ?>" /></th>
+					<td><input type="text" id="wpsolr_settings_field_label" name="wpsolr_settings[field_label]" value="<?php echo $this->settings[ 'field_label' ]; ?>" /></td>
+					<td><input type="text" id="wpsolr_settings_field_helps" name="wpsolr_settings[field_helps]" value="<?php echo $this->settings[ 'field_helps' ]; ?>" /></td>
+					<td><?php $this->field_type_select(); ?></td>
+					<td><?php $this->field_type_extras(); ?></td>
+					<td></td>
+				</tr>
+			</tbody>
+		</table>
+		<?php
 	}
 	function field_name_field() {
 		echo '<input type="text" id="wpsolr_settings_field_name" name="wpsolr_settings[field_name]" value="' . $this->settings[ 'field_name' ] . '" /> (must have no spaces or non-word characters)';
@@ -128,6 +153,53 @@ class WPSolr {
 	}
 	function field_helps_field() {
 		echo '<input type="text" id="wpsolr_settings_field_helps" name="wpsolr_settings[field_helps]" value="' . $this->settings[ 'field_helps' ] . '" /> ';
+	}
+	function field_type_select() {
+		$ft = $this->settings[ 'field_type' ];
+		$display = 'text';
+		if ( in_array( $ft, array( 'checkbox', 'radio', 'select' ) ) ) $display = 'choice';
+		if ( in_array( $ft, array( 'number', 'range', 'date', 'time', 'datetime' ) ) ) $display = 'range';
+		?>
+		<select name="wpsolr_settings[field_type]" class="wpsolr_settings_field_type_selector">
+			<optgroup class="text_types" label="Text Types">
+				<option value="text"<?php echo 'text' == $ft ? ' selected' : ''; ?>>Text (single line)</option>
+				<option value="textarea"<?php echo 'textarea' == $ft ? ' selected' : ''; ?>>Text Area</option>
+				<option value="email"<?php echo 'email' == $ft ? ' selected' : ''; ?>>Email</option>
+				<option value="tel"<?php echo 'tel' == $ft ? ' selected' : ''; ?>>Telephone Number</option>
+				<option value="url"<?php echo 'url' == $ft ? ' selected' : ''; ?>>URL</option>
+			</optgroup>
+			<optgroup class="choice_types" label="Choice Types">
+				<option value="checkbox"<?php echo 'checkbox' == $ft ? ' selected' : ''; ?>>Check Boxes</option>
+				<option value="radio"<?php echo 'radio' == $ft ? ' selected' : ''; ?>>Radio Buttons</option>
+				<option value="select"<?php echo 'select' == $ft ? ' selected' : ''; ?>>Dropdown Menu</option>
+			</optgroup>
+			<optgroup class="range_types" label="Range Types">
+				<option value="number"<?php echo 'number' == $ft ? ' selected' : ''; ?>>Numeric</option>
+				<option value="range"<?php echo 'range' == $ft ? ' selected' : ''; ?>>Numeric Range</option>
+				<option value="date"<?php echo 'date' == $ft ? ' selected' : ''; ?>>Date</option>
+				<option value="time"<?php echo 'time' == $ft ? ' selected' : ''; ?>>Time</option>
+				<option value="datetime"<?php echo 'datetime' == $ft ? ' selected' : ''; ?>>Date and Time</option>
+			</optgroup>
+		</select>
+		<?php
+	}
+	function field_type_extras() {
+		$ft = $this->settings[ 'field_type' ];
+		$display = 'text';
+		if ( in_array( $ft, array( 'checkbox', 'radio', 'select' ) ) ) $display = 'choice';
+		if ( in_array( $ft, array( 'number', 'range', 'date', 'time', 'datetime' ) ) ) $display = 'range';
+		?>
+		<div class="choice_type_options type_options" style="display:<?php echo 'choice' == $display ? 'block' : 'none'; ?>;">
+			<textarea name="wpsolr_settings[choice_type_options]" style="float:left;"><?php 
+				echo $this->settings[ 'choice_type_options' ]; 
+			?></textarea>
+			enter choices, one per line, or<br>
+			enter key/value pairs, one per line
+		</div>
+		<div class="range_type_options type_options" style="display:<?php echo 'range' == $display ? 'block' : 'none'; ?>;">
+			<p>Range type options go here.</p>
+		</div>
+		<?php
 	}
 	function field_type_field() {
 		$ft = $this->settings[ 'field_type' ];
