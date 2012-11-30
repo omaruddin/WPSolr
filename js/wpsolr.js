@@ -19,4 +19,17 @@ jQuery( document ).ready( function( $ ) {
 		}
 	};
 	$( '.wpsolr_settings_field_type_selector' ).change( change_field_type );
+
+	$( '#wpsolr_add_field_button' ).click( function() {
+		$.get(
+			ajaxurl,
+			{
+				action: 'add_field',
+				next: $( '#wpsolr-fields-table tbody tr' ).length
+			},
+			function( res ) {
+				$( '#wpsolr-fields-table tbody' ).append( res );
+			}
+		);
+	});
 });

@@ -36,8 +36,9 @@ class WPSolr {
 	
 	function wp_loaded() {
 		// add actions
-		add_action( 'admin_menu', array( &$this, 'admin_menu' ) );
-		add_action( 'admin_init', array( &$this, 'admin_init' ) );
+		add_action( 'admin_menu',        array( &$this, 'admin_menu' ) );
+		add_action( 'admin_init',        array( &$this, 'admin_init' ) );
+		add_action( 'wp_ajax_add_field', array( &$this, 'add_field'  ) );
 		
 		// add filters
 		add_filter( 'attachment_fields_to_edit', array( &$this, 'attachment_fields_to_edit' ), null, 2 );
@@ -53,6 +54,7 @@ class WPSolr {
     
 		// enqueue scripts for this page
 		add_action( 'admin_print_scripts-' . $wpsolr_options_page, array( &$this, 'admin_print_scripts' ) );
+		add_action( 'admin_print_styles-'  . $wpsolr_options_page, array( &$this, 'admin_print_styles'  ) );
 	}
 	
 	/**
@@ -60,6 +62,13 @@ class WPSolr {
 	 */
 	function admin_print_scripts() {
 		wp_enqueue_script( 'wpsolr-js' );
+	}
+
+	/**
+	 * Output necessary css
+	 */
+	function admin_print_styles() {
+		wp_enqueue_style( 'wpsolr-css' );
 	}
 
 	/**
@@ -112,7 +121,8 @@ class WPSolr {
 		add_settings_field( 'field_type',  __( 'Field Type'  ), array( &$this, 'field_type_field'  ), 'wpsolr-settings', 'wpsolr_settings_section' );
 		*/
 		// register styles and scripts
-		wp_register_script( 'wpsolr-js', plugins_url( 'js/wpsolr.js', __FILE__ ), 'jquery' );
+		wp_register_script( 'wpsolr-js',  plugins_url( 'js/wpsolr.js',   __FILE__ ), 'jquery' );
+		wp_register_style(  'wpsolr-css', plugins_url( 'css/wpsolr.css', __FILE__ ) );
 	}
 	
 	/**
@@ -121,7 +131,7 @@ class WPSolr {
 	function wpsolr_settings_section() {
 		echo '<p>Configure the settings for the added metadata field.</p>';
 		?>
-		<table class="form-table">
+		<table class="form-table" id="wpsolr-fields-table">
 			<thead>
 				<tr>
 					<th scope="col">Name</th>
@@ -143,6 +153,9 @@ class WPSolr {
 				</tr>
 			</tbody>
 		</table>
+		<div id="wpsolr-fields-table-buttons">
+			<button type="button" class="button" id="wpsolr_add_field_button">Add a Field</button>
+		</div>
 		<?php
 	}
 	function field_name_field() {
@@ -308,6 +321,47 @@ class WPSolr {
 		}
 		return $post;
 	}
+	
+	/**
+	 * Add a field to the table
+	 */
+	function add_field() {
+		$i = $_GET[ 'next' ];
+		?>
+		<tr>
+			<th><input type="text" name="wpsolr_settings[fields][<?php echo $i; ?>][field_name]"   /></th>
+			<td><input type="text" name="wpsolr_settings[fields][<?php echo $i; ?>][field_label]"  /></td>
+			<td><input type="text" name="wpsolr_settings[fields][<?php echo $i; ?>][field_helps]"  /></td>
+			<td>
+				<select name="wpsolr_settings[fields][<?php echo $i; ?>][field_type]" id="wpsolr_settings_field_type">
+					<optgroup class="text_types" label="Text Types">
+						<option value="text">Text (single line)</option>
+						<option value="textarea">Text Area</option>
+						<option value="email">Email</option>
+						<option value="tel">Telephone Number</option>
+						<option value="url">URL</option>
+					</optgroup>
+					<optgroup class="choice_types" label="Choice Types">
+						<option value="checkbox">Check Boxes</option>
+						<option value="radio">Radio Buttons</option>
+						<option value="select">Dropdown Menu</option>
+					</optgroup>
+					<optgroup class="range_types" label="Range Types">
+						<option value="number">Numeric</option>
+						<option value="range">Numeric Range</option>
+						<option value="date">Date</option>
+						<option value="time">Time</option>
+						<option value="datetime">Date and Time</option>
+					</optgroup>
+				</select>
+			</td>
+			<td></td>
+			<td></td>
+		</tr>
+		<?php
+		exit;
+	}
+	
 	
 	/**
 	 * Validate user input to the settings pages
