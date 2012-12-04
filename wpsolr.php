@@ -152,8 +152,8 @@ class WPSolr {
 						<th><input type="text" name="wpsolr_settings[fields][<?php echo $i; ?>][field_name]"  value="<?php echo $f[ 'field_name' ]; ?>"  /></th>
 						<td><input type="text" name="wpsolr_settings[fields][<?php echo $i; ?>][field_label]" value="<?php echo $f[ 'field_label' ]; ?>" /></td>
 						<td><input type="text" name="wpsolr_settings[fields][<?php echo $i; ?>][field_helps]" value="<?php echo $f[ 'field_helps' ]; ?>" /></td>
-						<td><?php $this->field_type_select( $f[ 'field_type' ], $i ); ?></td>
-						<td><?php $this->field_type_extras( $f[ 'field_type' ], $i, $f[ 'choice_type_options' ] ); ?></td>
+						<td><?php $this->field_type_select( $i, $f[ 'field_type' ] ); ?></td>
+						<td><?php $this->field_type_extras( $i, $f[ 'field_type' ], $f[ 'choice_type_options' ] ); ?></td>
 						<td></td>
 					</tr>
 					<?php
@@ -169,16 +169,7 @@ class WPSolr {
 		</div>
 		<?php
 	}
-	function field_name_field() {
-		echo '<input type="text" id="wpsolr_settings_field_name" name="wpsolr_settings[field_name]" value="' . $this->settings[ 'field_name' ] . '" /> (must have no spaces or non-word characters)';
-	}
-	function field_label_field() {
-		echo '<input type="text" id="wpsolr_settings_field_label" name="wpsolr_settings[field_label]" value="' . $this->settings[ 'field_label' ] . '" /> ';
-	}
-	function field_helps_field() {
-		echo '<input type="text" id="wpsolr_settings_field_helps" name="wpsolr_settings[field_helps]" value="' . $this->settings[ 'field_helps' ] . '" /> ';
-	}
-	function field_type_select( $ft, $i ) {
+	function field_type_select( $i, $ft = 'text' ) {
 		?>
 		<select name="wpsolr_settings[fields][<?php echo $i; ?>][field_type]" class="wpsolr_settings_field_type_selector">
 			<optgroup class="text_types" label="Text Types">
@@ -203,7 +194,7 @@ class WPSolr {
 		</select>
 		<?php
 	}
-	function field_type_extras( $ft, $i, $opts ) {
+	function field_type_extras( $i, $ft = 'text', $opts = '' ) {
 		$display = 'text';
 		if ( in_array( $ft, array( 'checkbox', 'radio', 'select' ) ) ) $display = 'choice';
 		if ( in_array( $ft, array( 'number', 'range', 'date', 'time', 'datetime' ) ) ) $display = 'range';
@@ -211,55 +202,16 @@ class WPSolr {
 		<div class="choice_type_options type_options" style="display:<?php echo 'choice' == $display ? 'block' : 'none'; ?>;">
 			<textarea name="wpsolr_settings[fields][<?php echo $i; ?>][choice_type_options]" style="float:left;"><?php 
 				echo $opts; 
-			?></textarea>
-			enter choices, one per line, or<br>
-			enter key/value pairs, one per line
+			?></textarea><!--enter choices, one per line, or<br>enter key/value pairs, one per line-->
 		</div>
 		<div class="range_type_options type_options" style="display:<?php echo 'range' == $display ? 'block' : 'none'; ?>;">
-			<p>Range type options go here.</p>
+			<label>Max: <input type="number" name="wpsolr_settings[fields][<?php echo $i; ?>][field_max]"></label><br>
+			<label>Min: <input type="number" name="wpsolr_settings[fields][<?php echo $i; ?>][field_min]"></label><br>
+			<label>Step: <input type="number" name="wpsolr_settings[fields][<?php echo $i; ?>][field_step]"></label> 
 		</div>
 		<?php
 	}
-	function field_type_field() {
-		$ft = $this->settings[ 'field_type' ];
-		$display = 'text';
-		if ( in_array( $ft, array( 'checkbox', 'radio', 'select' ) ) ) $display = 'choice';
-		if ( in_array( $ft, array( 'number', 'range', 'date', 'time', 'datetime' ) ) ) $display = 'range';
-		?>
-		<select name="wpsolr_settings[field_type]" id="wpsolr_settings_field_type">
-			<optgroup class="text_types" label="Text Types">
-				<option value="text"<?php echo 'text' == $ft ? ' selected' : ''; ?>>Text (single line)</option>
-				<option value="textarea"<?php echo 'textarea' == $ft ? ' selected' : ''; ?>>Text Area</option>
-				<option value="email"<?php echo 'email' == $ft ? ' selected' : ''; ?>>Email</option>
-				<option value="tel"<?php echo 'tel' == $ft ? ' selected' : ''; ?>>Telephone Number</option>
-				<option value="url"<?php echo 'url' == $ft ? ' selected' : ''; ?>>URL</option>
-			</optgroup>
-			<optgroup class="choice_types" label="Choice Types">
-				<option value="checkbox"<?php echo 'checkbox' == $ft ? ' selected' : ''; ?>>Check Boxes</option>
-				<option value="radio"<?php echo 'radio' == $ft ? ' selected' : ''; ?>>Radio Buttons</option>
-				<option value="select"<?php echo 'select' == $ft ? ' selected' : ''; ?>>Dropdown Menu</option>
-			</optgroup>
-			<optgroup class="range_types" label="Range Types">
-				<option value="number"<?php echo 'number' == $ft ? ' selected' : ''; ?>>Numeric</option>
-				<option value="range"<?php echo 'range' == $ft ? ' selected' : ''; ?>>Numeric Range</option>
-				<option value="date"<?php echo 'date' == $ft ? ' selected' : ''; ?>>Date</option>
-				<option value="time"<?php echo 'time' == $ft ? ' selected' : ''; ?>>Time</option>
-				<option value="datetime"<?php echo 'datetime' == $ft ? ' selected' : ''; ?>>Date and Time</option>
-			</optgroup>
-		</select>
-		<div class="choice_type_options type_options" style="display:<?php echo 'choice' == $display ? 'block' : 'none'; ?>;">
-			<textarea name="wpsolr_settings[choice_type_options]" style="float:left;"><?php 
-				echo $this->settings[ 'choice_type_options' ]; 
-			?></textarea>
-			enter choices, one per line, or<br>
-			enter key/value pairs, one per line
-		</div>
-		<div class="range_type_options type_options" style="display:<?php echo 'range' == $display ? 'block' : 'none'; ?>;">
-			<p>Range type options go here.</p>
-		</div>
-		<?php
-	}
-	
+
 	/**
 	 * Modifies the list of fields available when editing uploaded media files
 	 */
@@ -315,7 +267,18 @@ class WPSolr {
 						}
 						$fields[ $fn ][ 'html'  ] = $boxes;
 						break;
-					
+					case 'number':
+					case 'range':
+					case 'date':
+					case 'time':
+					case 'datetime':
+						$val  =  '' !== $val ? ' value="'  . $val . '"': '';
+						$max  = isset( $f[ 'field_max'  ] ) ? ' max="'  . $f[ 'field_max'  ] . '"' : '';
+						$min  = isset( $f[ 'field_min'  ] ) ? ' min="'  . $f[ 'field_min'  ] . '"' : '';
+						$step = isset( $f[ 'field_step' ] ) ? ' step="' . $f[ 'field_step' ] . '"' : '';
+						$fields[ $fn ][ 'input' ] = 'html';
+						$fields[ $fn ][ 'html'  ] = '<input type="' .$ft . '"' . $max . $min . $step . $val . '>';
+						break;
 				}
 			}
 		}
@@ -366,7 +329,7 @@ class WPSolr {
 					</optgroup>
 				</select>
 			</td>
-			<td></td>
+			<td><?php echo $this->field_type_select( $i ); ?></td>
 			<td></td>
 		</tr>
 		<?php

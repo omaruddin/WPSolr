@@ -22,6 +22,7 @@
 }
 
 #wpsolr-fields-table thead th {
+	text-align: center;
 	font-weight: bold;
 	border-bottom: 1px solid #ccc;
 	background-image: -webkit-linear-gradient(top,#F9F9F9,#ECECEC);
